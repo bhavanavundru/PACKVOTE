@@ -13,6 +13,8 @@ router = APIRouter(prefix="/api/recommend", tags=["Recommendations"])
 DATA_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "datasets", "place_data.csv")
 _places = load_place_data_from_csv(DATA_CSV)
 
+print(f"Loaded {_places and len(_places) or 0} places from CSV: {DATA_CSV}")
+
 recommender = Recommender(place_data=_places)
 
 
