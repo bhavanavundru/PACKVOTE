@@ -1,33 +1,33 @@
 from fastapi import APIRouter
-from typing import List, Dict
 from pydantic import BaseModel
+from typing import List, Dict
+from app.core.voting_system import VotingSystem
 
 router = APIRouter(prefix="/api/vote", tags=["Voting"])
 
+voting_system = VotingSystem()
+
+# Pydantic schemas
 class Preference(BaseModel):
     user_id: str
     preferences: Dict
 
 class Candidate(BaseModel):
     id: str
+    name: str
     tags: List[str]
     price: float
+    rating: float
+
+class VoteRequest(BaseModel):
+    preferences: List[Preference]
+    candidates: List[Candidate]
+
 
 @router.post("/weighted")
-def weighted_vote(prefs: List[Preference], candidates: List[Candidate]):
-    def match_score(pref, candidate):
-        score = 0
-        for tag in candidate.tags:
-            if tag in pref.get("likes", []): score += 1
-            if tag in pref.get("dislikes", []): score -= 1
-        if "budget_max" in pref and candidate.price > pref["budget_max"]:
-            score -= (candidate.price - pref["budget_max"]) / pref["budget_max"]
-        return score
+def group_vote(data: VoteRequest):
+    prefs = [p.dict() for p in data.preferences]
+    candidates = [c.dict() for c in data.candidates]
 
-    results = {}
-    for c in candidates:
-        total = sum(match_score(p.preferences, c) for p in prefs)
-        results[c.id] = total
-
-    ranked = sorted(results.items(), key=lambda x: x[1], reverse=True)
-    return {"ranking": ranked}
+    ranking = voting_system.weighted_vote(prefs, candidates)
+    return {"ranking": ranking}
