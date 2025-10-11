@@ -1,7 +1,10 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from app.core.nlp_engine import NLPEngine
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
+
+nlp_engine = NLPEngine()
 
 class ChatRequest(BaseModel):
     user: str
@@ -9,11 +12,5 @@ class ChatRequest(BaseModel):
 
 @router.post("/")
 def process_message(data: ChatRequest):
-    # Temporary response (will later call nlp_engine)
-    print(f"Received message from {data.user}: {data.message}")
-    return {
-        "user": data.user,
-        "message": data.message,
-        "preferences": {"likes": ["beaches"], "dislikes": ["long hikes"]},
-        "tone": "positive"
-    }
+    result = nlp_engine.extract_preferences(data.message)
+    return {"user": data.user, "preferences": result}
